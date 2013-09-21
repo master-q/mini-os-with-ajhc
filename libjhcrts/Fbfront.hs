@@ -7,13 +7,13 @@ import FbfrontStub
 import Xenbus
 import Xen
 
-foreign export ccall "_nit_fbfront" initFbfront :: CString -> Ptr Word64 -> Int -> Int -> Int -> Int -> Int -> IO (Ptr Word8)
+foreign export ccall "_nit_fbfront" initFbfront :: CString -> Ptr Word64 -> Int32 -> Int32 -> Int32 -> Int32 -> Word32 -> IO (Ptr Word8)
 foreign import ccall "hs_get_fbfront_handler" getFbfrontHandler :: IO (FunPtr (IO ()))
 foreign import ccall "hs_get_fbfront_dev_evtchn_ptr" getFbfrontDevEvtchnPtr :: Ptr FbfrontDev -> IO (Ptr EvtchnPort)
+foreign import ccall "memset" memset :: Ptr a -> Word8 -> Word32 -> IO ()
+initFbfront nodename mfns width height depth stride n = setupTranscation nodename width height depth stride n
 
-initFbfront nodename mfns width height depth stride n = setupTranscation nodename
-
-setupTranscation nodename =
+setupTranscation nodename width height depth stride n =
   do  name <- if nodename == nullPtr then return "device/vfb/0" else peekCString nodename
       printk $ "******************* FBFRONT for " ++ name ++ " **********\n\n\n"
       dev <- mkFbfrontDev
@@ -25,6 +25,33 @@ setupTranscation nodename =
       handler <- getFbfrontHandler
       evtchn <- getFbfrontDevEvtchnPtr dev
       evtchnAllocUnbound (fromInteger $ toInteger dom) handler (castPtr dev) evtchn
+      s <- allocPage
+      setFbfrontDevPage dev s
+      memset s 0 pageSize
+      -- in
+      setXenfbPageInCons s 0
+      setXenfbPageInProd s 0
+      -- out
+      setXenfbPageOutCons s 0
+      setXenfbPageOutProd s 0
+      -- width
+      setFbfrontDevWidth dev width
+      setXenfbPageWidth  s   width
+      -- height
+      setFbfrontDevHeight dev height
+      setXenfbPageHeight  s   height
+      -- depth
+      setFbfrontDevDepth dev depth
+      setXenfbPageDepth  s   $ fromInteger $ toInteger depth
+      -- stride
+      setFbfrontDevStride dev stride
+      setXenfbPageLineLength s $ fromInteger $ toInteger stride
+      -- mem align
+      setFbfrontDevMemLength dev $ fromInteger $ toInteger $ n * pageSize
+      setXenfbPageMemLength s $ n * pageSize
+      -- other
+      setFbfrontDevOffset dev 0
+      setFbfrontDevEvents dev nullPtr
       return nullPtr
 {-
   printk("******************* FBFRONT for %s **********\n\n\n", nodename);

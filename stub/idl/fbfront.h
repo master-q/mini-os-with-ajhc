@@ -1,4 +1,13 @@
 struct xenfb_page {
+  uint32_t in_cons;
+  uint32_t in_prod;
+  uint32_t out_cons;
+  uint32_t out_prod;
+  int32_t width;
+  int32_t height;
+  uint32_t line_length;
+  uint32_t mem_length;
+  uint8_t depth;
 };
 
 struct fbfront_dev {
