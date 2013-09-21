@@ -3,14 +3,15 @@ import Foreign.C.String
 import Foreign.Ptr
 import Data.Word
 import Util
-import FbfrontStub
 
--- struct fbfront_dev *init_fbfront(char *_nodename, unsigned long *mfns, int width, int height, int depth, int stride, int n)
-initFbfront :: CString -> Ptr Word64 -> Int -> Int -> Int -> Int -> Int -> Ptr Word8
-initFbfront nodename mfns width height depth stride n = nullPtr
+foreign export ccall "_nit_fbfront" initFbfront :: CString -> Ptr Word64 -> Int -> Int -> Int -> Int -> Int -> IO (Ptr Word8)
+initFbfront nodename mfns width height depth stride n = return nullPtr
 
-setupTranscation nodename =
-  do printk $ "******************* FBFRONT for " ++ "" ++ " **********\n\n\n"
+{-setupTranscation nodename =
+  do  -- name <- if nodename == nullPtr then return "device/vfb/0" else return "device/vfb/0"
+      name <- if nodename == nullPtr then return "null" else return "some other"
+      printk $ "******************* FBFRONT for " ++ name ++ " **********\n\n\n"
+      return nullPtr-}
 {-
   printk("******************* FBFRONT for %s **********\n\n\n", nodename);
 

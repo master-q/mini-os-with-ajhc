@@ -300,9 +300,12 @@ static void fbfront_drawhoriz(int x1, int x2, int y, uint32_t color)
         fb[x + y*WIDTH] ^= color;
 }
 
-static void fbfront_thread(void *p)
+//struct fbfront_dev *_nit_fbfront(char *_nodename, unsigned long *mfns, int width, int height, int depth, int stride, int n);
+
+static void fbfront_thread2(void *p)
 {
-    size_t line_length = WIDTH * (DEPTH / 8);
+  printk("fbfront_thread\n");
+/*    size_t line_length = WIDTH * (DEPTH / 8);
     size_t memsize = HEIGHT * line_length;
     unsigned long *mfns;
     int i, n = (memsize + PAGE_SIZE-1) / PAGE_SIZE;
@@ -312,14 +315,9 @@ static void fbfront_thread(void *p)
     memset(fb, 0, memsize);
     mfns = xmalloc_array(unsigned long, n);
     for (i = 0; i < n; i++)
-        mfns[i] = virtual_to_mfn((char *) fb + i * PAGE_SIZE);
-    fb_dev = init_fbfront(NULL, mfns, WIDTH, HEIGHT, DEPTH, line_length, n);
-    xfree(mfns);
-    if (!fb_dev) {
-        xfree(fb);
-        return;
-    }
-    up(&fbfront_sem);
+        mfns[i] = virtual_to_mfn((char *) fb + i * PAGE_SIZE);*/
+//    fb_dev = _nit_fbfront(NULL, mfns, WIDTH, HEIGHT, DEPTH, line_length, n);
+//    fb_dev = NULL;
 }
 
 static void clip_cursor(int *x, int *y)
@@ -468,9 +466,9 @@ __attribute__((weak)) int app_main(start_info_t *si)
     create_thread("periodic_thread", periodic_thread, si);
     create_thread("netfront", netfront_thread, si);
     create_thread("blkfront", blkfront_thread, si);
-    create_thread("fbfront", fbfront_thread, si);
     create_thread("kbdfront", kbdfront_thread, si);
     create_thread("pcifront", pcifront_thread, si);
+    create_thread("fbfront", fbfront_thread2, si);
     return 0;
 }
 
