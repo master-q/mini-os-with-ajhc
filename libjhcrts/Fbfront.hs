@@ -4,6 +4,7 @@ import Foreign.Ptr
 import Data.Word
 import Util
 import FbfrontStub
+import Xenbus
 
 foreign export ccall "_nit_fbfront" initFbfront :: CString -> Ptr Word64 -> Int -> Int -> Int -> Int -> Int -> IO (Ptr Word8)
 initFbfront nodename mfns width height depth stride n = setupTranscation nodename
@@ -15,6 +16,8 @@ setupTranscation nodename =
       name' <- newCString name
       setFbfrontDevNodename dev name'
       let path = name ++ "/backend-id"
+      dom <- withCString path xenbusReadInteger
+      setFbfrontDevDom dev $ fromInteger $ toInteger dom
       return nullPtr
 {-
   printk("******************* FBFRONT for %s **********\n\n\n", nodename);
