@@ -5,13 +5,13 @@ import Data.Word
 import Util
 
 foreign export ccall "_nit_fbfront" initFbfront :: CString -> Ptr Word64 -> Int -> Int -> Int -> Int -> Int -> IO (Ptr Word8)
-initFbfront nodename mfns width height depth stride n = return nullPtr
+initFbfront nodename mfns width height depth stride n = setupTranscation nodename
 
-{-setupTranscation nodename =
-  do  -- name <- if nodename == nullPtr then return "device/vfb/0" else return "device/vfb/0"
-      name <- if nodename == nullPtr then return "null" else return "some other"
+setupTranscation nodename =
+  do  name <- if nodename == nullPtr then return "device/vfb/0" else return "device/vfb/0"
+ --     name <- if nodename == nullPtr then return "null" else return "some other"
       printk $ "******************* FBFRONT for " ++ name ++ " **********\n\n\n"
-      return nullPtr-}
+      return nullPtr
 {-
   printk("******************* FBFRONT for %s **********\n\n\n", nodename);
 

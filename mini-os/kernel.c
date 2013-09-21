@@ -300,24 +300,30 @@ static void fbfront_drawhoriz(int x1, int x2, int y, uint32_t color)
         fb[x + y*WIDTH] ^= color;
 }
 
-//struct fbfront_dev *_nit_fbfront(char *_nodename, unsigned long *mfns, int width, int height, int depth, int stride, int n);
-
-static void fbfront_thread2(void *p)
+uint8_t* _nit_fbfront(char* x23,void* x24,size_t x25,size_t x26,size_t x27,size_t x28,int x29) ;
+static void fbfront_thread(void *p)
 {
-  printk("fbfront_thread\n");
-/*    size_t line_length = WIDTH * (DEPTH / 8);
+  if(0){
+    size_t line_length = WIDTH * (DEPTH / 8);
     size_t memsize = HEIGHT * line_length;
     unsigned long *mfns;
-    int i, n = (memsize + PAGE_SIZE-1) / PAGE_SIZE;
+    int  i, n = (memsize + PAGE_SIZE-1) / PAGE_SIZE;
 
     memsize = n * PAGE_SIZE;
     fb = _xmalloc(memsize, PAGE_SIZE);
     memset(fb, 0, memsize);
     mfns = xmalloc_array(unsigned long, n);
     for (i = 0; i < n; i++)
-        mfns[i] = virtual_to_mfn((char *) fb + i * PAGE_SIZE);*/
-//    fb_dev = _nit_fbfront(NULL, mfns, WIDTH, HEIGHT, DEPTH, line_length, n);
-//    fb_dev = NULL;
+      mfns[i] = virtual_to_mfn((char *) fb + i * PAGE_SIZE);
+
+//      _nit_fbfront(NULL,(void*) mfns, WIDTH, HEIGHT, DEPTH, line_length, n);
+    xfree(mfns);
+    if (!fb_dev) {
+      xfree(fb);
+      return;
+    }
+    up(&fbfront_sem);
+  }
 }
 
 static void clip_cursor(int *x, int *y)
@@ -466,12 +472,12 @@ __attribute__((weak)) int app_main(start_info_t *si)
     create_thread("periodic_thread", periodic_thread, si);
     create_thread("netfront", netfront_thread, si);
     create_thread("blkfront", blkfront_thread, si);
+    create_thread("fbfront", fbfront_thread, si);
     create_thread("kbdfront", kbdfront_thread, si);
     create_thread("pcifront", pcifront_thread, si);
-    create_thread("fbfront", fbfront_thread2, si);
     return 0;
 }
-
+void abort(void);
 /*
  * INITIAL C ENTRY POINT.
  */
@@ -484,7 +490,6 @@ void start_kernel(start_info_t *si)
     arch_init(si);
 
     trap_init();
-
     /* print out some useful information  */
     printk("Xen Minimal OS!\n");
     printk("  start_info: %p(VA)\n", si);
@@ -508,7 +513,6 @@ void start_kernel(start_info_t *si)
     arch_print_info();
 
     setup_xen_features();
-
     /* Init memory management. */
     init_mm();
 
