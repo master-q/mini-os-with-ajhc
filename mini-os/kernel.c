@@ -303,7 +303,6 @@ static void fbfront_drawhoriz(int x1, int x2, int y, uint32_t color)
 uint8_t* _nit_fbfront(char* x23,void* x24,size_t x25,size_t x26,size_t x27,size_t x28,int x29) ;
 static void fbfront_thread(void *p)
 {
-  if(0){
     size_t line_length = WIDTH * (DEPTH / 8);
     size_t memsize = HEIGHT * line_length;
     unsigned long *mfns;
@@ -316,14 +315,14 @@ static void fbfront_thread(void *p)
     for (i = 0; i < n; i++)
       mfns[i] = virtual_to_mfn((char *) fb + i * PAGE_SIZE);
 
-//      _nit_fbfront(NULL,(void*) mfns, WIDTH, HEIGHT, DEPTH, line_length, n);
+    fb_dev = (void*)_nit_fbfront(NULL,(void*) mfns, WIDTH, HEIGHT, DEPTH, line_length, n);
     xfree(mfns);
     if (!fb_dev) {
       xfree(fb);
       return;
     }
     up(&fbfront_sem);
-  }
+
 }
 
 static void clip_cursor(int *x, int *y)

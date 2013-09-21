@@ -1,5 +1,5 @@
 /*
- * Frame Buffer + Keyboard driver for Mini-OS. 
+ * Frame Buffer + Keyboard driver for Mini-OS.
  * Samuel Thibault <samuel.thibault@eu.citrix.com>, 2008
  * Based on blkfront.c.
  */
@@ -87,7 +87,7 @@ struct kbdfront_dev *init_kbdfront(char *_nodename, int abs_pointer)
 #endif
 
     snprintf(path, sizeof(path), "%s/backend-id", nodename);
-    dev->dom = xenbus_read_integer(path); 
+    dev->dom = xenbus_read_integer(path);
     evtchn_alloc_unbound(dev->dom, kbdfront_handler, dev, &dev->evtchn);
 
     dev->page = s = (struct xenkbd_page*) alloc_page();
@@ -425,7 +425,7 @@ struct fbfront_dev *init_fbfront(char *_nodename, unsigned long *mfns, int width
 #endif
 
     snprintf(path, sizeof(path), "%s/backend-id", nodename);
-    dev->dom = xenbus_read_integer(path); 
+    dev->dom = xenbus_read_integer(path);
     evtchn_alloc_unbound(dev->dom, fbfront_handler, dev, &dev->evtchn);
 
     dev->page = s = (struct xenfb_page*) alloc_page();
@@ -697,3 +697,5 @@ int fbfront_open(struct fbfront_dev *dev)
 }
 #endif
 
+
+#include "../../stub/stub/fbfront_c_stub.h"

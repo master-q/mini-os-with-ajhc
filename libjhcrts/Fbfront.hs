@@ -3,14 +3,18 @@ import Foreign.C.String
 import Foreign.Ptr
 import Data.Word
 import Util
+import FbfrontStub
 
 foreign export ccall "_nit_fbfront" initFbfront :: CString -> Ptr Word64 -> Int -> Int -> Int -> Int -> Int -> IO (Ptr Word8)
 initFbfront nodename mfns width height depth stride n = setupTranscation nodename
 
 setupTranscation nodename =
-  do  name <- if nodename == nullPtr then return "device/vfb/0" else return "device/vfb/0"
- --     name <- if nodename == nullPtr then return "null" else return "some other"
+  do  name <- if nodename == nullPtr then return "device/vfb/0" else peekCString nodename
       printk $ "******************* FBFRONT for " ++ name ++ " **********\n\n\n"
+      dev <- mkFbfrontDev
+      name' <- newCString name
+      setFbfrontDevNodename dev name'
+      let path = name ++ "/backend-id"
       return nullPtr
 {-
   printk("******************* FBFRONT for %s **********\n\n\n", nodename);
