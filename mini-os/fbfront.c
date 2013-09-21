@@ -697,5 +697,11 @@ int fbfront_open(struct fbfront_dev *dev)
 }
 #endif
 
+evtchn_handler_t hs_get_fbfront_handler(void) {
+  return fbfront_handler;
+}
 
+evtchn_port_t* hs_get_fbfront_dev_evtchn_ptr(struct fbfront_dev* dev) {
+    return &dev->evtchn;
+}
 #include "../../stub/stub/fbfront_c_stub.h"

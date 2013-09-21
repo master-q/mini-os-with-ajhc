@@ -5,8 +5,12 @@ import Data.Word
 import Util
 import FbfrontStub
 import Xenbus
+import Xen
 
 foreign export ccall "_nit_fbfront" initFbfront :: CString -> Ptr Word64 -> Int -> Int -> Int -> Int -> Int -> IO (Ptr Word8)
+foreign import ccall "hs_get_fbfront_handler" getFbfrontHandler :: IO (FunPtr (IO ()))
+foreign import ccall "hs_get_fbfront_dev_evtchn_ptr" getFbfrontDevEvtchnPtr :: Ptr FbfrontDev -> IO (Ptr EvtchnPort)
+
 initFbfront nodename mfns width height depth stride n = setupTranscation nodename
 
 setupTranscation nodename =
@@ -18,6 +22,9 @@ setupTranscation nodename =
       let path = name ++ "/backend-id"
       dom <- withCString path xenbusReadInteger
       setFbfrontDevDom dev $ fromInteger $ toInteger dom
+      handler <- getFbfrontHandler
+      evtchn <- getFbfrontDevEvtchnPtr dev
+      evtchnAllocUnbound (fromInteger $ toInteger dom) handler (castPtr dev) evtchn
       return nullPtr
 {-
   printk("******************* FBFRONT for %s **********\n\n\n", nodename);

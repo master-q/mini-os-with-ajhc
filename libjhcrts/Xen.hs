@@ -11,6 +11,7 @@ foreign import ccall "hypervisor.h force_evtchn_callback" forceEvtchnCallback ::
 type EvtchnPort = Word32
 foreign import ccall "events.h bind_virq" bindVirq :: EvtchnPort -> FunPtr a -> Ptr Word8 -> IO EvtchnPort
 foreign import ccall "events.h bind_evtchn" bindEvtchn :: EvtchnPort -> FunPtr a -> Ptr Word8 -> IO EvtchnPort
+foreign import ccall "evtchn_alloc_unbound" evtchnAllocUnbound ::  Word16 ->  FunPtr (IO ()) -> Ptr Word8 -> Ptr EvtchnPort -> IO Int
 
 virqTimer :: Word32
 virqTimer = 0
