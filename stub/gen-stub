@@ -9,6 +9,7 @@ TypeMap =  {
   'uint32_t' => 'Word32',
   'uint64_t' => 'Word64',
   'uint64_t*' => '(Ptr Word64)',
+  'uint64_t[]' => '(Ptr Word64)',
   'int16_t' => 'Int16',
   'int64_t' => 'Int64',
   'int' => 'Int32',

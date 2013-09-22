@@ -8,6 +8,8 @@ struct xenfb_page {
   uint32_t line_length;
   uint32_t mem_length;
   uint8_t depth;
+
+   uint64_t[] pd;
 };
 
 struct fbfront_dev {
