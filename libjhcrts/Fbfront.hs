@@ -11,6 +11,7 @@ foreign export ccall "_nit_fbfront" initFbfront :: CString -> Ptr Word64 -> Int3
 foreign import ccall "hs_get_fbfront_handler" getFbfrontHandler :: IO (FunPtr (IO ()))
 foreign import ccall "hs_get_fbfront_dev_evtchn_ptr" getFbfrontDevEvtchnPtr :: Ptr FbfrontDev -> IO (Ptr EvtchnPort)
 foreign import ccall "memset" memset :: Ptr a -> Word8 -> Word32 -> IO ()
+foreign import ccall "hs_get_max_pd" getMaxPb :: Ptr XenfbPage -> IO Int
 initFbfront nodename mfns width height depth stride n = setupTranscation nodename width height depth stride n
 
 setupTranscation nodename width height depth stride n =
@@ -52,6 +53,8 @@ setupTranscation nodename width height depth stride n =
       -- other
       setFbfrontDevOffset dev 0
       setFbfrontDevEvents dev nullPtr
+      -- farmebuffer
+      maxPb <- getMaxPb s
       return nullPtr
 {-
   printk("******************* FBFRONT for %s **********\n\n\n", nodename);
