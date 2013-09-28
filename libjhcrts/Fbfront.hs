@@ -8,7 +8,8 @@ import FbfrontStub
 import Xenbus
 import Xen
 
-foreign export ccall "_nit_fbfront" initFbfront :: CString -> Ptr Word64 -> Int32 -> Int32 -> Int32 -> Int32 -> Word32 -> IO (Ptr Word8)
+type Mfns = Ptr Word64
+foreign export ccall "_nit_fbfront" initFbfront :: CString -> Mfns -> Int32 -> Int32 -> Int32 -> Int32 -> Word32 -> IO (Ptr FbfrontDev)
 foreign import ccall "hs_get_fbfront_handler" getFbfrontHandler :: IO (FunPtr (IO ()))
 foreign import ccall "hs_get_fbfront_dev_evtchn_ptr" getFbfrontDevEvtchnPtr :: Ptr FbfrontDev -> IO (Ptr EvtchnPort)
 foreign import ccall "memset" memset :: Ptr a -> Word8 -> Word32 -> IO ()
@@ -16,34 +17,38 @@ foreign import ccall "hs_get_max_pd" getMaxPd :: Ptr XenfbPage -> IO Int
 foreign import primitive "const.sizeof(unsigned long)" sizeUnsignedLong :: Word32
 initFbfront nodename mfns width height depth stride n = setupTranscation nodename mfns width height depth stride n
 
+pageCount :: Int
+pdOffset :: Int
 pageCount = fromInteger $ toInteger $ pageSize `div` sizeUnsignedLong
+pdOffset = fromInteger $ toInteger sizeUnsignedLong
 
 copyMfns :: Ptr Word64 -> Ptr Word64 -> Int -> Int -> Int -> IO (Int, Int)
-copyMfns pd mfns mapped n j =
+copyMfns pd mfns n mapped j =
   if mapped < n && j < pageCount then
-    do v <- peekByteOff mfns $ mapped * (fromInteger $ toInteger sizeUnsignedLong)
-       pokeByteOff pd (j * (fromInteger $ toInteger sizeUnsignedLong)) (v :: Word64)
-       copyMfns pd mfns (mapped+1) n (j+1)
+    do v <- peekByteOff mfns $ mapped * pdOffset
+       pokeByteOff pd (j * pdOffset) (v :: Word64)
+       copyMfns pd mfns n (mapped+1) (j+1)
   else
-    return (j, mapped)
+    return (mapped, j)
 
 zeroFill :: Ptr Word64 -> Int -> IO ()
 zeroFill pd j =
   if j < pageCount then
-    do pokeByteOff pd (j * (fromInteger $ toInteger sizeUnsignedLong)) (0 :: Word64)
+    do pokeByteOff pd (j * pdOffset) (0 :: Word64)
        zeroFill pd (j+1)
   else
     return ()
 
-setupPageDirectory :: Ptr XenfbPage -> Ptr Word64 -> Int -> Int -> Int -> Int -> IO Int
-setupPageDirectory s mfns mapped maxPd n i =
+setupPageDirectory :: Ptr XenfbPage -> Mfns -> Int -> Int -> Int -> Int -> IO Int
+setupPageDirectory s mfns maxPd n mapped i =
   if mapped < n && i < maxPd then
     do pd <- allocPage
-       (j, mapped') <- copyMfns pd mfns mapped n 0
-       zeroFill pd j
+--       printk $ show pd ++ "\n"
+--       (mapped', j) <- copyMfns pd mfns n mapped 0
+       zeroFill pd 0
        pd' <- getXenfbPagePd s
-       pokeByteOff pd' (i * (fromInteger $ toInteger sizeUnsignedLong)) $ virtToMfn pd
-       setupPageDirectory s mfns mapped' maxPd n (i+1)
+       pokeByteOff pd' (i * pdOffset) $ virtToMfn pd
+       setupPageDirectory s mfns maxPd n mapped (i + 1)
   else
     return i
 {-        unsigned long *pd = (unsigned long *) alloc_page();
@@ -108,9 +113,11 @@ setupTranscation nodename mfns width height depth stride n =
       setFbfrontDevEvents dev nullPtr
       -- page directory
       maxPd <- getMaxPd s
-      i <- setupPageDirectory s mfns 0 (fromInteger $ toInteger maxPd) (fromInteger $ toInteger n) 0
-      zeroFillPd s maxPd i
-      return nullPtr
+      printk $ show maxPd ++ "\n"
+      printk $ show pageSize ++ "\n"
+      i <- setupPageDirectory s mfns (fromInteger $ toInteger maxPd) (fromInteger $ toInteger n) 0 0
+--      zeroFillPd s maxPd i
+      return dev
 {-
   printk("******************* FBFRONT for %s **********\n\n\n", nodename);
 

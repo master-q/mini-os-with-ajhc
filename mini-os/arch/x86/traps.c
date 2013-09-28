@@ -33,7 +33,7 @@ void machine_check(void);
 void dump_regs(struct pt_regs *regs)
 {
     printk("Thread: %s\n", current->name);
-#ifdef __i386__    
+#ifdef __i386__
     printk("EIP: %x, EFLAGS %x.\n", regs->eip, regs->eflags);
     printk("EBX: %08x ECX: %08x EDX: %08x\n",
 	   regs->ebx, regs->ecx, regs->edx);
@@ -45,18 +45,18 @@ void dump_regs(struct pt_regs *regs)
 	   regs->xcs, regs->eflags, regs->esp, regs->xss);
 #else
     printk("RIP: %04lx:[<%016lx>] ", regs->cs & 0xffff, regs->rip);
-    printk("\nRSP: %04lx:%016lx  EFLAGS: %08lx\n", 
+    printk("\nRSP: %04lx:%016lx  EFLAGS: %08lx\n",
            regs->ss, regs->rsp, regs->eflags);
     printk("RAX: %016lx RBX: %016lx RCX: %016lx\n",
            regs->rax, regs->rbx, regs->rcx);
     printk("RDX: %016lx RSI: %016lx RDI: %016lx\n",
-           regs->rdx, regs->rsi, regs->rdi); 
+           regs->rdx, regs->rsi, regs->rdi);
     printk("RBP: %016lx R08: %016lx R09: %016lx\n",
-           regs->rbp, regs->r8, regs->r9); 
+           regs->rbp, regs->r8, regs->r9);
     printk("R10: %016lx R11: %016lx R12: %016lx\n",
-           regs->r10, regs->r11, regs->r12); 
+           regs->r10, regs->r11, regs->r12);
     printk("R13: %016lx R14: %016lx R15: %016lx\n",
-           regs->r13, regs->r14, regs->r15); 
+           regs->r13, regs->r14, regs->r15);
 #endif
 }
 
@@ -98,7 +98,7 @@ void page_walk(unsigned long virt_address)
         pgentry_t *tab = (pgentry_t *)start_info.pt_base, page;
         unsigned long addr = virt_address;
         printk("Pagetable walk from virt %lx, base %lx:\n", virt_address, start_info.pt_base);
-    
+
 #if defined(__x86_64__)
         page = tab[l4_table_offset(addr)];
         tab = pte_to_virt(page);
@@ -110,7 +110,7 @@ void page_walk(unsigned long virt_address)
         page = tab[l2_table_offset(addr)];
         tab = pte_to_virt(page);
         printk("   L2 = %"PRIpte" (%p)  [offset = %lx]\n", page, tab, l2_table_offset(addr));
-        
+
         page = tab[l1_table_offset(addr)];
         printk("    L1 = %"PRIpte" [offset = %lx]\n", page, l1_table_offset(addr));
 
@@ -136,7 +136,7 @@ static int handle_cow(unsigned long addr) {
 	if (!(page & _PAGE_PRESENT))
 	    return 0;
         tab = pte_to_virt(page);
-        
+
         page = tab[l1_table_offset(addr)];
 	if (!(page & _PAGE_PRESENT))
 	    return 0;
@@ -204,10 +204,10 @@ void do_page_fault(struct pt_regs *regs, unsigned long error_code)
 
     /* If we are already handling a page fault, and got another one
        that means we faulted in pagetable walk. Continuing here would cause
-       a recursive fault */       
-    if(handling_pg_fault == 1) 
+       a recursive fault */
+    if(handling_pg_fault == 1)
     {
-        printk("Page fault in pagetable walk (access to invalid memory?).\n"); 
+        printk("Page fault in pagetable walk (access to invalid memory?).\n");
         HYPERVISOR_sched_op(SCHEDOP_shutdown, &sched_shutdown);
     }
     handling_pg_fault++;
@@ -244,7 +244,7 @@ void do_general_protection(struct pt_regs *regs, long error_code)
     struct sched_shutdown sched_shutdown = { .reason = SHUTDOWN_crash };
 #ifdef __i386__
     printk("GPF eip: %p, error_code=%lx\n", regs->eip, error_code);
-#else    
+#else
     printk("GPF rip: %p, error_code=%lx\n", regs->rip, error_code);
 #endif
     dump_regs(regs);
@@ -319,12 +319,12 @@ static trap_info_t trap_table[] = {
     { 19, 0, __KERNEL_CS, (unsigned long)simd_coprocessor_error      },
     {  0, 0,           0, 0                           }
 };
-    
+
 
 
 void trap_init(void)
 {
-    HYPERVISOR_set_trap_table(trap_table);    
+    HYPERVISOR_set_trap_table(trap_table);
 }
 
 void trap_fini(void)
