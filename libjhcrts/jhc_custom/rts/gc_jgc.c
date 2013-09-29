@@ -88,24 +88,39 @@ static void
 gc_add_grey(struct stack *stack, entry_t *s)
 {
         VALGRIND_MAKE_MEM_DEFINED(s,(S_BLOCK(s))->u.pi.size * sizeof(uintptr_t));
-        if(s < 0x210) { printk("add_grey: %p %p\n", stack, s); }
         if(gc_check_heap(s) && s_set_used_bit(s))
                 stack->stack[stack->ptr++] = s;
 }
 
+static bool
+gc_check_megablock(entry_t *s)
+{
+        arena_t arena;
+        struct s_megablock *mb;
+        SLIST_FOREACH(arena, &used_arenas, link) {
+                if(arena->current_megablock && arena->current_megablock->base <= s && s <= arena->current_megablock->base + MEGABLOCK_SIZE) {
+                        return true;
+                }
+
+                SLIST_FOREACH(mb, &arena->megablocks, next) {
+                        if(mb->base <= s && s < mb->base + MEGABLOCK_SIZE) {
+                                return true;
+                        }
+                }
+        }
+        return false;
+}
+
+
 static void
 gc_mark_deeper(struct stack *stack, unsigned *number_redirects)
 {
-  if(stack->ptr != 0 && stack->stack[0]->ptrs[0] < 0x210){
-    printk("[[%p]]\n", stack->stack[0]->ptrs[0]);
-  }
-
-  int origin = stack->ptr;
-  int size = *number_redirects;
         while(stack->ptr) {
                 entry_t *e = stack->stack[--stack->ptr];
                 struct s_block *pg = S_BLOCK(e);
-               debugf("Processing Grey: %p\n",e);
+                if(!(pg->flags & SLAB_MONOLITH))
+                        VALGRIND_MAKE_MEM_DEFINED(e,pg->u.pi.size * sizeof(uintptr_t));
+                debugf("Processing Grey: %p\n",e);
                 unsigned num_ptrs = pg->flags & SLAB_MONOLITH ? pg->u.m.num_ptrs : pg->u.pi.num_ptrs;
                 stack_check(stack, num_ptrs);
                 for(unsigned i = 0; i < num_ptrs; i++) {
@@ -119,12 +134,10 @@ gc_mark_deeper(struct stack *stack, unsigned *number_redirects)
                         }
                         if(IS_PTR(e->ptrs[i])) {
                                 entry_t * ptr = TO_GCPTR(e->ptrs[i]);
-                                if(ptr < 0x210){
-                                  printk("%d -> %d[%d]\n", origin, stack->ptr, size);
-printk("[[%p]]\n", stack->stack[0]->ptrs[0]);
-                                  printk("Following: %p %d %p\n",e->ptrs[i],i, ptr);
+                                if(gc_check_megablock(ptr)) {
+                                        debugf("Following: %p %p\n",e->ptrs[i], ptr);
+                                        gc_add_grey(stack, ptr);
                                 }
-                                gc_add_grey(stack, ptr);
                         }
                 }
         }
@@ -681,9 +694,6 @@ s_set_used_bit(void *val)
 {
         assert(val);
         struct s_block *pg = S_BLOCK(val);
-        if(pg < 0x210) {
-          printk("s_set_used_bit %p %p\n", pg, val);
-        }
         unsigned int offset = ((uintptr_t *)val - (uintptr_t *)pg) - pg->color;
         if(__predict_true(BIT_IS_UNSET(pg->used,offset/pg->u.pi.size))) {
                 if (pg->flags & SLAB_MONOLITH) {
